@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:calculadora_imc/models/pessoa.dart';
 
 void main() => runApp(
       MaterialApp(
         home: Home(),
         debugShowCheckedModeBanner: false,
         
+        
       ),
     );
+
 
 class Home extends StatefulWidget {
   @override
@@ -19,6 +22,9 @@ class _HomeState extends State<Home> {
   TextEditingController _weightController = TextEditingController();
   TextEditingController _heightController = TextEditingController();
   String _result;
+
+
+  var _pessoa = Pessoa(weight: 0, height: 0, sex: 1);
 
   @override
   void initState() {
@@ -46,7 +52,7 @@ class _HomeState extends State<Home> {
   AppBar buildAppBar() {
     return AppBar(
       title: Text('Calculadora de IMC'),
-      backgroundColor: Colors.blue,
+      backgroundColor: Colors.blueAccent,
       actions: <Widget>[
         IconButton(
           icon: Icon(Icons.refresh),
@@ -72,42 +78,60 @@ class _HomeState extends State<Home> {
               label: "Altura (cm)",
               error: "Insira uma altura!",
               controller: _heightController),
+          buildRadioButton(),
           buildTextResult(),
           buildCalculateButton(),
         ],
       ),
     );
   }
+  
 
-  void calculateImc() {
-    double weight = double.parse(_weightController.text);
-    double height = double.parse(_heightController.text) / 100.0;
-    double imc = weight / (height * height);
 
-    setState(() {
-      _result = "IMC = ${imc.toStringAsPrecision(2)}\n";
-      if (imc < 18.6)
-        _result += "Abaixo do peso";
-      else if (imc < 25.0)
-        _result += "Peso ideal";
-      else if (imc < 30.0)
-        _result += "Levemente acima do peso";
-      else if (imc < 35.0)
-        _result += "Obesidade Grau I";
-      else if (imc < 40.0)
-        _result += "Obesidade Grau II";
-      else
-        _result += "Obesidade Grau IIII";
-    });
-  }
+// ...
+
+Widget buildRadioButton() {
+  return Center(
+    child: Column(
+      children: <Widget>[
+        
+        ListTile(
+          title: const Text('Feminino'),
+          leading: Radio(
+            value: 2,
+            groupValue: _pessoa.sex,
+            onChanged: (int value) {
+              setState(() { _pessoa.sex = value; });
+            },
+          ),
+        ),
+        ListTile(
+          title: const Text('Masculino'),
+          leading: Radio(
+            value: 1,
+            groupValue: _pessoa.sex,
+            onChanged: (int value) {
+              setState(() { _pessoa.sex = value; });
+            },
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 
   Widget buildCalculateButton() {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 36.0),
       child: RaisedButton(
+        color: Colors.blueAccent,
         onPressed: () {
           if (_formKey.currentState.validate()) {
-            calculateImc();
+            _pessoa.calculateImc(double.parse(_weightController.text), double.parse(_heightController.text), _pessoa.sex);
+            setState(() {
+              _result = _pessoa.imc.toStringAsPrecision(2) + "\n" + _pessoa.result;
+            });
           }
         },
         child: Text('CALCULAR', style: TextStyle(color: Colors.white)),
@@ -115,14 +139,40 @@ class _HomeState extends State<Home> {
     );
   }
 
+  Widget _statusText(status){
+    int r;
+    int g;
+    int b;
+
+    if(status == 0){
+      r = 0; g = 184; b = 49;
+    }else if(status == 1){
+      r = 65; g = 159; b = 217;
+    }else if(status == 2){
+      r = 242; g = 208; b = 34;
+    }else if(status == 3){
+      r = 242; g = 190; b = 34;
+    }else if(status == 4){
+      r = 242; g = 146; b = 29;
+    }else if(status == 5){
+      r = 217; g = 65; b = 30;
+    }else{
+      r = 0; g = 0; b = 0;
+    }
+
+    return Text(
+      _result,
+      textAlign: TextAlign.center,
+      style: TextStyle(color: Color.fromRGBO(r, g, b, 1), fontWeight: FontWeight.bold, fontSize: 20),
+    );
+  }
+
   Widget buildTextResult() {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 36.0),
-      child: Text(
-        _result,
-        textAlign: TextAlign.center,
-      ),
+      child: _statusText(_pessoa.status)
     );
+    
   }
 
   Widget buildTextFormField(
